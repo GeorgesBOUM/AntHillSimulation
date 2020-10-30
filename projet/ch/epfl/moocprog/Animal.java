@@ -7,7 +7,7 @@ package ch.epfl.moocprog;
  *
  */
 public abstract class Animal extends Positionable {
-	double direction;
+	private double direction;
 	
 	/**
 	 * Construit un Animal à une position passée en paramètre et 
