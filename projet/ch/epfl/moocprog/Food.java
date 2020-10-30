@@ -52,6 +52,7 @@ public final class Food extends Positionable{
 		}
 	}
 	
+	@Override
 	public String toString() {
 		return super.toString() + "\n" + String.format("Quantity : %.2f", getQuantity());
 	}
