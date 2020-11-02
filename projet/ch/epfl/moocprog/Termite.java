@@ -1,5 +1,10 @@
 package ch.epfl.moocprog;
 
+import static ch.epfl.moocprog.app.Context.getConfig;
+import static ch.epfl.moocprog.config.Config.TERMITE_HP;
+import static ch.epfl.moocprog.config.Config.TERMITE_LIFESPAN;
+import static ch.epfl.moocprog.config.Config.TERMITE_SPEED;
+
 public final class Termite extends Animal {
 	
 	/**
@@ -7,12 +12,16 @@ public final class Termite extends Animal {
 	 * @param tp
 	 */
 	public Termite(ToricPosition tp) {
-		super(tp);
+		super(tp, getConfig().getInt(TERMITE_HP), getConfig().getTime(TERMITE_LIFESPAN));
 	}
 
 	@Override
 	public void accept(AnimalVisitor visitor, RenderingMedia s) {
 		visitor.visit(this, s);
 	}
-
+	
+	@Override
+	public double getSpeed() {
+		return getConfig().getDouble(TERMITE_SPEED);
+	}
 }

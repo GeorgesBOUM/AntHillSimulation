@@ -1,5 +1,6 @@
 package ch.epfl.moocprog;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -17,9 +18,11 @@ import static ch.epfl.moocprog.app.Context.getConfig;
  * @author GB
  *
  */
-public final class Environment implements FoodGeneratorEnvironmentView{
+public final class Environment implements 
+	FoodGeneratorEnvironmentView, AnimalEnvironmentView{
 	private FoodGenerator foodGenerator;
 	private List<Food> listFood;
+	private List<Animal> listAnimal;
 	
 	/**
 	 * Construit un environnement par défaut
@@ -27,6 +30,7 @@ public final class Environment implements FoodGeneratorEnvironmentView{
 	public Environment() {
 		this.foodGenerator = new FoodGenerator();
 		this.listFood = new LinkedList<Food>();
+		this.listAnimal = new LinkedList<Animal>();
 	}
 	
 	/**
@@ -50,8 +54,21 @@ public final class Environment implements FoodGeneratorEnvironmentView{
 		return foodQuantities;
 	}
 	
+	/**
+	 * Permet la mise à jour de l'environnement à chaque dt écoulé
+	 * @param dt
+	 */
 	public void update(Time dt) {
+		Iterator<Animal> aniter = this.listAnimal.iterator();
 		this.foodGenerator.update(this, dt);
+		while (aniter.hasNext()) {
+			Animal animal = (Animal) aniter.next();
+			if (animal.isDead()) {
+				aniter.remove();
+			} else {
+				animal.update(null, dt);
+			}
+		}
 		this.listFood.removeIf(food -> food.getQuantity() <= 0);
 	}
 	
@@ -61,6 +78,7 @@ public final class Environment implements FoodGeneratorEnvironmentView{
 	 */
 	public void renderEntities(EnvironmentRenderer environmentRenderer) {
 		this.listFood.forEach(environmentRenderer::renderFood);
+		this.listAnimal.forEach(environmentRenderer::renderAnimal);
 	}
 	
 	/**
@@ -76,7 +94,17 @@ public final class Environment implements FoodGeneratorEnvironmentView{
 	 * @param animal
 	 */
 	public void addAnimal(Animal animal) {
-		
+		requireNonNull(animal);
+		this.listAnimal.add(animal);
+	}
+	
+	public List<ToricPosition> getAnimalsPosition() {
+		LinkedList<ToricPosition> animalsPosition = new LinkedList<ToricPosition>();
+		Iterator<Animal> aniter = this.listAnimal.iterator();
+		while (aniter.hasNext()) {
+			animalsPosition.add(aniter.next().getPosition());			
+		}
+		return animalsPosition;
 	}
 	
 	/**
