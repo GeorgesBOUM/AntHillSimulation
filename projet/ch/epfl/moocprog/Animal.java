@@ -4,9 +4,11 @@ import static ch.epfl.moocprog.random.UniformDistribution.getValue;
 import static ch.epfl.moocprog.utils.Time.ZERO;
 import static ch.epfl.moocprog.app.Context.getConfig;
 import static ch.epfl.moocprog.config.Config.ANIMAL_LIFESPAN_DECREASE_FACTOR;
+import static ch.epfl.moocprog.config.Config.ANIMAL_NEXT_ROTATION_DELAY;
 
 
 import ch.epfl.moocprog.utils.Time;
+import ch.epfl.moocprog.utils.Utils;
 import ch.epfl.moocprog.utils.Vec2d;
 
 
@@ -20,6 +22,7 @@ public abstract class Animal extends Positionable {
 	private double direction;
 	private int hitpoints;
 	private Time lifespan;
+	private Time rotationDelay;
 	
 	/**
 	 * Construit un Animal à une position passée en paramètre et 
@@ -31,6 +34,7 @@ public abstract class Animal extends Positionable {
 		this.direction = getValue(0.0, 2 * Math.PI);
 		this.hitpoints = hitpoints;
 		this.lifespan = lifespan;
+		this.rotationDelay = Time.ZERO;
 	}
 	
 	/**
@@ -54,6 +58,10 @@ public abstract class Animal extends Positionable {
 		return this.direction;
 	}
 	
+	/**
+	 * Définit la nouvelle direction
+	 * @param direction
+	 */
 	public final void setDirection(double direction) {
 		this.direction = direction;
 	}
@@ -72,6 +80,22 @@ public abstract class Animal extends Positionable {
 	 */
 	public final int getHitpoints() {
 		return this.hitpoints;
+	}
+	
+	/**
+	 * Retourne le temps écoulé depuis la précédente rotation
+	 * @return le temps écoulé depuis la précédente rotation
+	 */
+	public Time getRotationDelay() {
+		return this.rotationDelay;
+	}
+	
+	/**
+	 * Définit le temps écoulé depuis la dernière rotation
+	 * @param rotationDelay
+	 */
+	public void setRotationDelay(Time rotationDelay) {
+		this.rotationDelay = rotationDelay;
 	}
 	
 	/**
@@ -100,12 +124,46 @@ public abstract class Animal extends Positionable {
 	}
 	
 	/**
+	 * Retourne l'angle de rotation le plus probable
+	 * @return l'angle de rotation le plus probable
+	 */
+	private void rotate() {
+		RotationProbability rt = this.computeRotationProbs();
+		double nouvelleDirection = Utils.pickValue(rt.getAngles(), rt.getProbabilities());
+		nouvelleDirection += this.getDirection();
+		this.setDirection(nouvelleDirection);
+	}
+	
+	/**
 	 * Définit le mouvement (rectiligne uniforme) d'un animal
 	 * @param dt
 	 */
 	protected final void move(Time dt) {
-		Vec2d v = Vec2d.fromAngle(this.getDirection()).scalarProduct(dt.toSeconds() * this.getSpeed());
+		Time animalNextRotationDelay = getConfig().getTime(ANIMAL_NEXT_ROTATION_DELAY);
+		Vec2d v;
+		this.setRotationDelay(this.getRotationDelay().plus(dt));
+		while (this.getRotationDelay().compareTo(animalNextRotationDelay) >= 0) {
+			this.setRotationDelay(this.getRotationDelay().minus(animalNextRotationDelay));
+			this.rotate();
+		}
+		v = Vec2d.fromAngle(this.getDirection()).scalarProduct(dt.toSeconds() * this.getSpeed());
 		this.setPosition(this.getPosition().add(v));
+		
+	}
+	
+	/**
+	 * Retourne un nouveau {@code RotationProbability} avec ses tableaux
+	 * de directiion et d'angle
+	 * @return un nouveau {@code RotationProbability}
+	 */
+	protected RotationProbability computeRotationProbs() {
+		double [] angles = {-180, -100, -55, -25, -10, 0, 10, 25, 55, 100, 180};
+		double [] probabilities = {0.0000, 0.0000, 0.0005, 0.0010, 0.0050,
+								   0.9870, 0.0050, 0.0010, 0.0005, 0.0000, 0.0000};
+		for (int i = 0; i < angles.length; i++) {
+			angles[i] = Math.toRadians(angles[i]);
+		}
+		return new RotationProbability(angles, probabilities);
 	}
 	
 	@Override
