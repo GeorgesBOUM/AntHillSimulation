@@ -14,12 +14,4 @@ public final class Pheromone extends Positionable {
 	public double getQuantity() {
 		return 0.0;
 	}
-	
-	/**
-	 * retourne la quantité de nourriture dans la phéromone
-	 * @return la quantité de nourriture dans la phéromone
-	 */
-	public double getFoodQuantity() {
-		return 0.0;
-	}
 }

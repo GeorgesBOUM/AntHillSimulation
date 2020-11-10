@@ -1,5 +1,7 @@
 package ch.epfl.moocprog;
 
+import ch.epfl.moocprog.utils.Utils;
+
 /**
  * Modélise la nourriture consommable par les fourmis
  * @author GB
@@ -37,6 +39,17 @@ public final class Food extends Positionable{
 	 */
 	public double takeQuantity(double q) {
 		double quantityTook;
+		Utils.require(q >= 0);
+		if (q > this.foodQuantity) {
+			quantityTook = this.foodQuantity;
+			this.foodQuantity = 0.0;
+			return quantityTook;
+		} else {
+			quantityTook = q;
+			this.foodQuantity -= q;
+			return quantityTook;
+		}
+		/*
 		if (q < 0) {
 			throw new IllegalArgumentException();
 		} else {
@@ -50,6 +63,7 @@ public final class Food extends Positionable{
 				return quantityTook;
 			}
 		}
+		*/
 	}
 	
 	@Override
