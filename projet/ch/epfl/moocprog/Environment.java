@@ -34,9 +34,6 @@ public final class Environment implements
 		this.listAnthill = new LinkedList<Anthill>();
 	}
 	
-	/**
-	 * Ajoute une food dans la List<Food>
-	 */
 	@Override
 	public void addFood(Food f) {
 		Utils.requireNonNull(f);
@@ -61,10 +58,6 @@ public final class Environment implements
 		this.listAnimal.add(animal);
 	}
 	
-	/**
-	 * Ajoute une fourmi à l'environnement
-	 * @param ant
-	 */
 	@Override
 	public void addAnt(Ant ant) {
 		this.addAnimal(ant);
@@ -89,14 +82,20 @@ public final class Environment implements
 	 */
 	public void update(Time dt) {
 		Iterator<Animal> aniter = this.listAnimal.iterator();
+		Iterator<Anthill> anthillIterator = this.listAnthill.iterator();
 		this.foodGenerator.update(this, dt);
 		while (aniter.hasNext()) {
 			Animal animal = (Animal) aniter.next();
 			if (animal.isDead()) {
 				aniter.remove();
 			} else {
-				animal.update(null, dt);
+				//animal.update(null, dt);
+				animal.update(this, dt);
 			}
+		}
+		while (anthillIterator.hasNext()) {
+			// Anthill anthill = (// Anthill) anthillIterator.next();
+			anthillIterator.next().update(this, dt);
 		}
 		this.listFood.removeIf(food -> food.getQuantity() <= 0);
 	}
@@ -139,12 +138,6 @@ public final class Environment implements
 		return Context.getConfig().getInt(Config.WORLD_HEIGHT);
 	}
 	
-	/**
-	 * Retourne la {@code Food} la plus proche d'une {@code AntWorker} dans son rayon de
-	 * perception. S'il n'y a rien dans ce rayon, retourne null.
-	 * @param antWorker
-	 * @return la nourriture la plus proche d'une AntWorker 
-	 */
 	@Override
 	public Food getClosestFoodForAnt(AntWorker antWorker) {
 		Utils.requireNonNull(antWorker);
@@ -162,12 +155,6 @@ public final class Environment implements
 		}
 	}
 	
-	/**
-	 * Retourne true si {@code AntWorker} peut rajouter sa nourriture à sa {@code Anthill};
-	 * dans ce cas, sa fourmilière est dans son rayon de perception
-	 * @param antWorker
-	 * @return true si une ouvrière peut rajouter sa nourriture à sa fourmilière
-	 */
 	@Override
 	public boolean dropFood(AntWorker antWorker) {
 		Utils.requireNonNull(antWorker);
@@ -198,5 +185,15 @@ public final class Environment implements
 		} catch (NullPointerException e) {
 			return false;
 		}	
+	}
+
+	@Override
+	public void selectSpecificBehaviorDispatch(AntWorker antWorker, Time dt) {
+		antWorker.seekForFood(this, dt);
+	}
+
+	@Override
+	public void selectSpecificBehaviorDispatch(AntSoldier antSoldier, Time dt) {
+		antSoldier.seekForEnemies(this, dt);
 	}
 }

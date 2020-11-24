@@ -5,6 +5,8 @@ import static ch.epfl.moocprog.config.Config.TERMITE_HP;
 import static ch.epfl.moocprog.config.Config.TERMITE_LIFESPAN;
 import static ch.epfl.moocprog.config.Config.TERMITE_SPEED;
 
+import ch.epfl.moocprog.utils.Time;
+
 public final class Termite extends Animal {
 	
 	/**
@@ -23,5 +25,10 @@ public final class Termite extends Animal {
 	@Override
 	public double getSpeed() {
 		return getConfig().getDouble(TERMITE_SPEED);
+	}
+
+	@Override
+	public void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt) {
+		// TODO Auto-generated method stub
 	}
 }

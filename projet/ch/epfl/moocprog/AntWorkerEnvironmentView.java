@@ -7,14 +7,16 @@ package ch.epfl.moocprog;
  */
 public interface AntWorkerEnvironmentView extends AntEnvironmentView {
 	/**
-	 * Retourne la {@code Food} la plus proche de {@code AntWorker}
+	 * Retourne la {@code Food} la plus proche d'une {@code AntWorker} dans son rayon de
+	 * perception. S'il n'y a rien dans ce rayon, retourne null.
 	 * @param antWorker
-	 * @return la nourriture la plus proche d'une ouvrière
+	 * @return la nourriture la plus proche d'une AntWorker 
 	 */
 	Food getClosestFoodForAnt (AntWorker antWorker);
 	
 	/**
-	 * Retourne true si {@code AntWorker} peut rajouter sa nourriture à sa {@code Anthill}
+	 * Retourne true si {@code AntWorker} peut rajouter sa nourriture à sa {@code Anthill};
+	 * dans ce cas, sa fourmilière est dans son rayon de perception
 	 * @param antWorker
 	 * @return true si une ouvrière peut rajouter sa nourriture à sa fourmilière
 	 */

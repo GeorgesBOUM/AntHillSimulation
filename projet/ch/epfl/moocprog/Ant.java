@@ -36,4 +36,11 @@ public class Ant extends Animal{
 	public double getSpeed() {
 		return 0.0;
 	}
+
+	@Override
+	protected void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt) {
+		
+	}
+	
+	
 }

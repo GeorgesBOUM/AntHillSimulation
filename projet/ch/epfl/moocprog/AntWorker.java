@@ -2,6 +2,7 @@ package ch.epfl.moocprog;
 
 import ch.epfl.moocprog.app.Context;
 import ch.epfl.moocprog.config.Config;
+import ch.epfl.moocprog.utils.Time;
 
 /**
  * Cette classe modélise les AntWorker, ou fourmis ouvrières
@@ -30,6 +31,15 @@ public final class AntWorker extends Ant {
 		return this.foodQuantity;
 	}
 	
+	/**
+	 * Permet à {@code AntWorker} de chercher de la nourriture
+	 * @param env
+	 * @param dt
+	 */
+	protected void seekForFood(AntWorkerEnvironmentView env, Time dt) {
+		this.move(dt);
+	}
+	
 	@Override
 	public double getSpeed() {
 		return Context.getConfig().getDouble(Config.ANT_WORKER_SPEED);
@@ -38,6 +48,11 @@ public final class AntWorker extends Ant {
 	@Override
 	public void accept(AnimalVisitor visitor, RenderingMedia s) {
 		visitor.visit(this, s);
+	}
+	
+	@Override
+	protected void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt) {
+		env.selectSpecificBehaviorDispatch(this, dt);
 	}
 	
 	@Override

@@ -1,13 +1,9 @@
 package ch.epfl.moocprog;
 
-import static ch.epfl.moocprog.random.UniformDistribution.getValue;
-import static ch.epfl.moocprog.utils.Time.ZERO;
-import static ch.epfl.moocprog.app.Context.getConfig;
-import static ch.epfl.moocprog.config.Config.ANIMAL_LIFESPAN_DECREASE_FACTOR;
-import static ch.epfl.moocprog.config.Config.ANIMAL_NEXT_ROTATION_DELAY;
-
-
-import ch.epfl.moocprog.utils.Time;
+import ch.epfl.moocprog.app.Context;
+import ch.epfl.moocprog.config.Config;
+import ch.epfl.moocprog.random.UniformDistribution;
+import  ch.epfl.moocprog.utils.Time;
 import ch.epfl.moocprog.utils.Utils;
 import ch.epfl.moocprog.utils.Vec2d;
 
@@ -31,7 +27,7 @@ public abstract class Animal extends Positionable {
 	 */
 	public Animal(ToricPosition tp, int hitpoints, Time lifespan) {
 		super(tp);
-		this.direction = getValue(0.0, 2 * Math.PI);
+		this.direction = UniformDistribution.getValue(0.0, 2 * Math.PI);
 		this.hitpoints = hitpoints;
 		this.lifespan = lifespan;
 		this.rotationDelay = Time.ZERO;
@@ -49,6 +45,13 @@ public abstract class Animal extends Positionable {
 	 * @param s
 	 */
 	public abstract void accept(AnimalVisitor visitor, RenderingMedia s);
+	
+	/**
+	 * Permet de définir le comportement spécifique de chaque animal
+	 * @param env
+	 * @param dt
+	 */
+	protected abstract void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt);
 	
 	/**
 	 * Retourne l'angle de la direction de l'animal
@@ -103,7 +106,7 @@ public abstract class Animal extends Positionable {
 	 * @return l'état boolean (mort ou vif) d'un animal
 	 */
 	public final boolean isDead() {
-		if (this.getHitpoints() <= 0 || this.getLifespan().compareTo(ZERO) <= 0) {
+		if (this.getHitpoints() <= 0 || this.getLifespan().compareTo(Time.ZERO) <= 0) {
 			return true;
 		} else {
 			return false;
@@ -116,10 +119,11 @@ public abstract class Animal extends Positionable {
 	 * @param env
 	 * @param dt
 	 */
-	public void update(AnimalEnvironmentView env, Time dt) {
-		this.getLifespan().minus(dt.times(getConfig().getDouble(ANIMAL_LIFESPAN_DECREASE_FACTOR)));
+	public final void update(AnimalEnvironmentView env, Time dt) {
+		this.getLifespan().minus(dt.times(Context.getConfig().getDouble(Config.ANIMAL_LIFESPAN_DECREASE_FACTOR)));
 		if (!this.isDead()) {
-			this.move(dt);
+			//this.move(dt);
+			specificBehaviorDispatch(env, dt);
 		}
 	}
 	
@@ -139,7 +143,7 @@ public abstract class Animal extends Positionable {
 	 * @param dt
 	 */
 	protected final void move(Time dt) {
-		Time animalNextRotationDelay = getConfig().getTime(ANIMAL_NEXT_ROTATION_DELAY);
+		Time animalNextRotationDelay = Context.getConfig().getTime(Config.ANIMAL_NEXT_ROTATION_DELAY);
 		Vec2d v;
 		this.setRotationDelay(this.getRotationDelay().plus(dt));
 		while (this.getRotationDelay().compareTo(animalNextRotationDelay) >= 0) {
