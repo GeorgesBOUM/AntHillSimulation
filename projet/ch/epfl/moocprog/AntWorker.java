@@ -32,12 +32,40 @@ public final class AntWorker extends Ant {
 	}
 	
 	/**
+	 * Définit la valeur de l'angle de direction nécessaire pour un demi tour
+	 * @return la nouvelle valeur de l'angle de direction après le demi tour
+	 */
+	private double turnAroun() {
+		double demiTour = this.getDirection() + Math.PI;
+		if (demiTour > 2 * Math.PI) {
+			demiTour -= 2 * Math.PI;
+		}
+		return demiTour;
+	}
+	
+	/**
 	 * Permet à {@code AntWorker} de chercher de la nourriture
 	 * @param env
 	 * @param dt
 	 */
 	protected void seekForFood(AntWorkerEnvironmentView env, Time dt) {
+		double antMaxFood = Context.getConfig().getDouble(Config.ANT_MAX_FOOD);
 		this.move(dt);
+		if (this.getFoodQuantity() == 0) {
+			Food closestFood = env.getClosestFoodForAnt(this);
+			if (closestFood != null) {
+				if (closestFood.getQuantity() < antMaxFood) {
+					this.foodQuantity = closestFood.takeQuantity(closestFood.getQuantity());
+				} else {
+					this.foodQuantity = closestFood.takeQuantity(antMaxFood);
+				}
+				this.setDirection(this.turnAroun());
+			}
+		}
+		if (env.dropFood(this) && this.getFoodQuantity() > 0) {
+			this.foodQuantity = 0;
+			this.setDirection(turnAroun());
+		}
 	}
 	
 	@Override
