@@ -12,13 +12,28 @@ import ch.epfl.moocprog.utils.Time;
 public final class AntSoldier extends Ant {
 	
 	/**
-	 * Construit une nouvelle AntSoldier positionnée en
-	 * tp, une position torique passée en paramètre
+	 * Construit une nouvelle {@code AntSoldier} positionnée en
+	 * tp, ayant pour fourmilière anthillId, et ayant un 
+	 * {@code AntRotationProbabilityModel} passés en paramètre
 	 * @param tp
+	 * @param anthillId
+	 * @param antSoldierProbModel
+	 */
+	public AntSoldier(ToricPosition tp, Uid anthillId, 
+			AntRotationProbabilityModel antSoldierProbModel) {
+		super(tp, Context.getConfig().getInt(Config.ANT_SOLDIER_HP),
+				Context.getConfig().getTime(Config.ANT_SOLDIER_LIFESPAN),
+				anthillId, antSoldierProbModel);
+	}
+	
+	/**
+	 * Construit une nouvelle {@code AntSoldier} positionnée en
+	 * tp, ayant pour fourmilière anthillId, passés en paramètre
+	 * @param tp
+	 * @param anthillId
 	 */
 	public AntSoldier(ToricPosition tp, Uid anthillId) {
-		super(tp, Context.getConfig().getInt(Config.ANT_SOLDIER_HP), 
-			  Context.getConfig().getTime(Config.ANT_SOLDIER_LIFESPAN), anthillId);
+		this(tp, anthillId, new PheromoneRotationProbabilityModel());
 	}
 	
 	/**
@@ -27,7 +42,7 @@ public final class AntSoldier extends Ant {
 	 * @param dt
 	 */
 	protected void seekForEnemies(AntEnvironmentView env, Time dt) {
-		this.move(dt);
+		this.move(env, dt);
 	}
 	
 	@Override

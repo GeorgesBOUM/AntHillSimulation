@@ -22,4 +22,20 @@ public interface AnimalEnvironmentView {
 	 * @param dt
 	 */
 	void selectSpecificBehaviorDispatch(AntSoldier antSoldier, Time dt);
+	
+	/**
+	 * Calcule la probabilité de rotation d'un animal
+	 * (comportement spécifique à un animal donné, dans un environnement donné)
+	 * @param env
+	 * @return un nouveau {@code RotationProbability}
+	 */
+	RotationProbability selectComputeRotationProbsDispatch(Ant ant );
+	
+	/**
+	 * Permet de spécifier une comportement spécifique à chaque
+	 * {@code Animal} après chaque mouvement (appel à move)
+	 * @param ant
+	 * @param dt
+	 */
+	void selectAfterMoveDispatch(Ant ant, Time dt);
 }

@@ -1,6 +1,9 @@
 package ch.epfl.moocprog;
 
+import ch.epfl.moocprog.app.Context;
+import ch.epfl.moocprog.config.Config;
 import ch.epfl.moocprog.utils.Time;
+import ch.epfl.moocprog.utils.Vec2d;
 
 /**
  * Modélise de façon générale une fourmi
@@ -9,14 +12,35 @@ import ch.epfl.moocprog.utils.Time;
  */
 public class Ant extends Animal{
 	private Uid anthillId;
+	private ToricPosition lastPos;
+	private AntRotationProbabilityModel probModel;
 	
 	/**
 	 * Construit une fourmi
 	 * @param tp
+	 * @param hitpoints
+	 * @param lifespan
+	 * @param anthillId
 	 */
 	public Ant(ToricPosition tp, int hitpoints, Time lifespan, Uid anthillId) {
 		super(tp, hitpoints, lifespan);
 		this.anthillId = anthillId;
+		this.lastPos = tp;
+		this.probModel = new PheromoneRotationProbabilityModel();
+	}
+	
+	/**
+	 * Construit une {@code Ant}
+	 * @param tp
+	 * @param hitpoints
+	 * @param lifespan
+	 * @param anthillId
+	 * @param antProbModel
+	 */
+	public Ant(ToricPosition tp,int hitpoints, Time lifespan,
+			Uid anthillId, AntRotationProbabilityModel antProbModel) {
+		this(tp, hitpoints, lifespan, anthillId);
+		this.probModel = antProbModel;
 	}
 	
 	/**
@@ -42,5 +66,49 @@ public class Ant extends Animal{
 		
 	}
 	
+	@Override
+	protected final RotationProbability computeRotationProbsDispatch(AnimalEnvironmentView env) {
+		return env.selectComputeRotationProbsDispatch(this);
+	}
 	
+	@Override
+	protected final void afterMoveDispatch(AnimalEnvironmentView env, Time dt) {
+		env.selectAfterMoveDispatch(this, dt);
+	}
+	
+	/**
+	 * Gère la diffusion de phéromone par une fourmi pendant le déplacement
+	 * @param env
+	 */
+	private final void spreadPheromones(AntEnvironmentView env) {
+		ToricPosition currentPos = this.getPosition();
+		double d = this.lastPos.toricDistance(currentPos);
+		double density = Context.getConfig().getDouble(Config.ANT_PHEROMONE_DENSITY);
+		double energy = Context.getConfig().getDouble(Config.ANT_PHEROMONE_ENERGY);
+		int numberPheromonesToCreate =(int)(d * density);
+		if (numberPheromonesToCreate > 0) {
+			Vec2d unitVector = lastPos.toricVector(currentPos).normalized();
+			unitVector = unitVector.scalarProduct(d / numberPheromonesToCreate);
+			while (numberPheromonesToCreate > 0) {
+				lastPos = lastPos.add(unitVector);
+				env.addPheromone(new Pheromone(lastPos, energy));
+				numberPheromonesToCreate -= 1;
+			}
+		}
+	}
+	
+	protected final RotationProbability computeRotationProbs(AntEnvironmentView env) {
+		return this.probModel.computerRotationProbs(this.computeDefaultRotationProbs(), 
+				this.getPosition(), this.getDirection(), env);
+		//return this.computeDefaultRotationProbs();
+	}
+	
+	/**
+	 * Specifie le comportement propre à {@code Ant} après un mouvement
+	 * @param env
+	 * @param dt
+	 */
+	protected final void afterMoveAnt(AntEnvironmentView env, Time dt) {
+		this.spreadPheromones(env);
+	}
 }

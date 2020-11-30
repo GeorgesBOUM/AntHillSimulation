@@ -54,6 +54,22 @@ public abstract class Animal extends Positionable {
 	protected abstract void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt);
 	
 	/**
+	 * Calcule la probabilité de rotation d'un animal
+	 * (comportement spécifique à un animal donné, dans un environnement donné)
+	 * @param env
+	 * @return un nouveau {@code RotationProbability}
+	 */
+	protected abstract RotationProbability computeRotationProbsDispatch(AnimalEnvironmentView env);
+	
+	/**
+	 * Permet de spécifier une comportement spécifique à chaque
+	 * {@code Animal} après chaque mouvement (appel à move)
+	 * @param env
+	 * @param dt
+	 */
+	protected abstract void afterMoveDispatch(AnimalEnvironmentView env, Time dt);
+	
+	/**
 	 * Retourne l'angle de la direction de l'animal
 	 * @return l'angle de la direction de l'animal
 	 */
@@ -122,7 +138,6 @@ public abstract class Animal extends Positionable {
 	public final void update(AnimalEnvironmentView env, Time dt) {
 		this.getLifespan().minus(dt.times(Context.getConfig().getDouble(Config.ANIMAL_LIFESPAN_DECREASE_FACTOR)));
 		if (!this.isDead()) {
-			//this.move(dt);
 			specificBehaviorDispatch(env, dt);
 		}
 	}
@@ -131,8 +146,9 @@ public abstract class Animal extends Positionable {
 	 * Retourne l'angle de rotation le plus probable
 	 * @return l'angle de rotation le plus probable
 	 */
-	private void rotate() {
-		RotationProbability rt = this.computeRotationProbs();
+	private void rotate(AnimalEnvironmentView env) {
+		// RotationProbability rt = this.computeRotationProbs();
+		RotationProbability rt = this.computeRotationProbsDispatch(env);
 		double nouvelleDirection = Utils.pickValue(rt.getAngles(), rt.getProbabilities());
 		nouvelleDirection += this.getDirection();
 		this.setDirection(nouvelleDirection);
@@ -142,25 +158,24 @@ public abstract class Animal extends Positionable {
 	 * Définit le mouvement (rectiligne uniforme) d'un animal
 	 * @param dt
 	 */
-	protected final void move(Time dt) {
+	protected final void move(AnimalEnvironmentView env, Time dt) {
 		Time animalNextRotationDelay = Context.getConfig().getTime(Config.ANIMAL_NEXT_ROTATION_DELAY);
 		Vec2d v;
 		this.setRotationDelay(this.getRotationDelay().plus(dt));
 		while (this.getRotationDelay().compareTo(animalNextRotationDelay) >= 0) {
 			this.setRotationDelay(this.getRotationDelay().minus(animalNextRotationDelay));
-			this.rotate();
+			this.rotate(env);
 		}
 		v = Vec2d.fromAngle(this.getDirection()).scalarProduct(dt.toSeconds() * this.getSpeed());
 		this.setPosition(this.getPosition().add(v));
-		
 	}
 	
 	/**
 	 * Retourne un nouveau {@code RotationProbability} avec ses tableaux
-	 * de directiion et d'angle
+	 * de directiion et d'angle (comportement par défaut d'un {@code Animal}
 	 * @return un nouveau {@code RotationProbability}
 	 */
-	protected RotationProbability computeRotationProbs() {
+	protected final RotationProbability computeDefaultRotationProbs() {
 		double [] angles = {-180, -100, -55, -25, -10, 0, 10, 25, 55, 100, 180};
 		double [] probabilities = {0.0000, 0.0000, 0.0005, 0.0010, 0.0050,
 								   0.9870, 0.0050, 0.0010, 0.0005, 0.0000, 0.0000};

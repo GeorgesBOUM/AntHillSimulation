@@ -23,6 +23,7 @@ public final class Environment implements
 	private List<Food> listFood;
 	private List<Animal> listAnimal;
 	private List<Anthill> listAnthill;
+	private List<Pheromone> listPheromone;
 	
 	/**
 	 * Construit un environnement par défaut
@@ -32,6 +33,18 @@ public final class Environment implements
 		this.listFood = new LinkedList<Food>();
 		this.listAnimal = new LinkedList<Animal>();
 		this.listAnthill = new LinkedList<Anthill>();
+		this.listPheromone = new LinkedList<Pheromone>();
+	}
+	
+	@Override
+	public void addPheromone(Pheromone pheromone) {
+		Utils.requireNonNull(pheromone);
+		this.listPheromone.add(pheromone);
+	}
+	
+	@Override
+	public void addAnt(Ant ant) {
+		this.addAnimal(ant);
 	}
 	
 	@Override
@@ -42,7 +55,7 @@ public final class Environment implements
 	
 	/**
 	 * Ajoute une fourmilière dans l'environnement
-	 * @param a
+	 * @param anthill
 	 */
 	public void addAnthill(Anthill anthill) {
 		Utils.requireNonNull(anthill);
@@ -56,11 +69,6 @@ public final class Environment implements
 	public void addAnimal(Animal animal) {
 		Utils.requireNonNull(animal);
 		this.listAnimal.add(animal);
-	}
-	
-	@Override
-	public void addAnt(Ant ant) {
-		this.addAnimal(ant);
 	}
 	
 	/**
@@ -77,25 +85,53 @@ public final class Environment implements
 	}
 	
 	/**
+	 * Retourne la liste des quantités de phéromones disponibles
+	 * @return la liste des quantités de phéromones disponibles
+	 */
+	public List<Double> getPheromonesQuantities() {
+		ListIterator<Pheromone> iterator = this.listPheromone.listIterator();
+		List<Double> pheromonesQuantities = new LinkedList<Double>();
+		while (iterator.hasNext()) {
+			pheromonesQuantities.add(iterator.next().getQuantity());
+		}
+		return pheromonesQuantities;
+	}
+	
+	/**
 	 * Permet la mise à jour de l'environnement à chaque dt écoulé
 	 * @param dt
 	 */
 	public void update(Time dt) {
-		Iterator<Animal> aniter = this.listAnimal.iterator();
+		
 		Iterator<Anthill> anthillIterator = this.listAnthill.iterator();
+		Iterator<Pheromone> pheromoneIterator = this.listPheromone.iterator();
 		this.foodGenerator.update(this, dt);
-		while (aniter.hasNext()) {
-			Animal animal = (Animal) aniter.next();
-			if (animal.isDead()) {
-				aniter.remove();
+		while (pheromoneIterator.hasNext()) {
+			Pheromone pheromone = pheromoneIterator.next();
+			if (pheromone.isNegligible()) {
+				pheromoneIterator.remove();
 			} else {
-				//animal.update(null, dt);
-				animal.update(this, dt);
+				pheromone.update(dt);
 			}
 		}
 		while (anthillIterator.hasNext()) {
-			// Anthill anthill = (// Anthill) anthillIterator.next();
-			anthillIterator.next().update(this, dt);
+			Anthill anthill = anthillIterator.next();
+			anthill.update(this, dt);
+		}
+		/*
+		 * En déclarant l'itérateur d'animaux ici, cela m'évite
+		 * une java.util.ConccurentModificationException.
+		 * Toujours en recherche d'une explication à la nécessité de
+		 * déclarer à cet endroit précis et pas à un autre
+		 */
+		Iterator<Animal> aniter = this.listAnimal.iterator();
+		while (aniter.hasNext()) {
+			Animal animal = aniter.next();
+			if (animal.isDead()) {
+				aniter.remove();
+			} else {
+				animal.update(this, dt);
+			}
 		}
 		this.listFood.removeIf(food -> food.getQuantity() <= 0);
 	}
@@ -107,6 +143,7 @@ public final class Environment implements
 	public void renderEntities(EnvironmentRenderer environmentRenderer) {
 		this.listFood.forEach(environmentRenderer::renderFood);
 		this.listAnimal.forEach(environmentRenderer::renderAnimal);
+		this.listPheromone.forEach(environmentRenderer::renderPheromone);
 	}
 	
 	/**
@@ -195,5 +232,80 @@ public final class Environment implements
 	@Override
 	public void selectSpecificBehaviorDispatch(AntSoldier antSoldier, Time dt) {
 		antSoldier.seekForEnemies(this, dt);
+	}
+	
+	@Override
+	public RotationProbability selectComputeRotationProbsDispatch(Ant ant) {
+		return ant.computeRotationProbs(this);
+	}
+	
+	@Override
+	public void selectAfterMoveDispatch(Ant ant, Time dt) {
+		ant.afterMoveAnt(this, dt);
+	}
+	
+	/**
+	 * Normalise un angle donné en le projettant dans l'intervalle [0, 2pi]
+	 * @param angle
+	 * @return l'angle normalisé (dans [0, 2pi]
+	 */
+	private static double normalizedAngle(double angle) {
+		while (angle < 0 ) {
+			angle += 2 * Math.PI;
+		}
+		while (angle > 2 * Math.PI) {
+			angle -= 2 * Math.PI;
+		}
+		return angle;
+	}
+	
+	/**
+	 * Retourne l'angle le plus proche d'une cible donnée
+	 * @param angle
+	 * @param target
+	 * @return l'angle le plus proche d'une cible donnée
+	 */
+	private static double closestAngleFrom(double angle, double target) {
+		double diff = angle - target;
+		diff = Environment.normalizedAngle(diff);
+		return Math.min(diff, (2 * Math.PI - diff));
+	}
+	
+	@Override
+	public double[] getPheromoneQuantitiesPerIntervalForAnt(ToricPosition position,
+			double directionAngleRad, double[] angles) {
+		
+		Utils.requireNonNull(position);
+		Utils.requireNonNull(angles);
+		Utils.requireNonNull(listPheromone);
+		
+		double beta; //angle between ant and pheromone in environment
+		Pheromone pheromone;
+		ToricPosition pheromonePosition;
+		double [] pheromonesQuantities = new double[angles.length];
+		int index;
+		double closestAngle;
+		double oneAngle;
+		Iterator<Pheromone> pheromoneIterator = this.listPheromone.iterator();
+		double maxSmellDistance = Context.getConfig().getDouble(Config.ANT_SMELL_MAX_DISTANCE);
+		
+		while (pheromoneIterator.hasNext()) {
+			pheromone = pheromoneIterator.next();
+			pheromonePosition = pheromone.getPosition();
+			if (!pheromone.isNegligible() && position.toricDistance(pheromonePosition) <= maxSmellDistance) {
+				beta = position.toricVector(pheromonePosition).angle() - directionAngleRad;
+				index = 0;
+				closestAngle = Environment.closestAngleFrom(angles[0], beta);
+				for (int i = 1; i < angles.length; i++) {
+					oneAngle = Environment.closestAngleFrom(angles[i], beta);
+					if (closestAngle > oneAngle) {
+						index = i;
+						closestAngle = oneAngle;
+					} 
+				}
+				pheromonesQuantities[index] += pheromone.getQuantity();
+			} 
+		}
+		return pheromonesQuantities;
 	}
 }

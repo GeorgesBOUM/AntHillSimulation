@@ -11,17 +11,40 @@ import ch.epfl.moocprog.utils.Time;
  */
 public final class AntWorker extends Ant {
 	private double foodQuantity;
+		
+	/**
+	 * Construit une nouvelle {@code AntWorker} positionnée en
+	 * tp, ayant pour fourmilière anthillId, et ayant un 
+	 * {@code AntRotationProbabilityModel} passés en paramètre
+	 * @param tp
+	 * @param anthillId
+	 * @param antWorkerProbModel
+	 */
+	public AntWorker(ToricPosition tp, Uid anthillId,
+			AntRotationProbabilityModel antWorkerProbModel) {
+		super(tp, Context.getConfig().getInt(Config.ANT_WORKER_HP), 
+				Context.getConfig().getTime(Config.ANT_WORKER_LIFESPAN), 
+				anthillId, antWorkerProbModel);
+		this.foodQuantity = 0.0;
+	}
 	
 	/**
-	 * Construit une nouvelle AntWorker positionnée en
-	 * tp, une position torique passée en paramètre
+	 * Construit une nouvelle {@code AntWorker} positionnée en
+	 * tp, et ayant pour fourmilière anthillId, passés en paramètre
 	 * @param tp
+	 * @param anthillId
 	 */
 	public AntWorker(ToricPosition tp, Uid anthillId) {
-		super(tp, Context.getConfig().getInt(Config.ANT_WORKER_HP),
-			  Context.getConfig().getTime(Config.ANT_WORKER_LIFESPAN), anthillId);
-		this.foodQuantity = 0;
+		this(tp, anthillId, new PheromoneRotationProbabilityModel());
 	}
+	
+	/*
+	public AntWorker(ToricPosition tp, Uid anthillId) {
+		super(tp, Context.getConfig().getInt(Config.ANT_WORKER_HP),
+				Context.getConfig().getTime(Config.ANT_WORKER_LIFESPAN), anthillId);
+		this.foodQuantity = 0.0;
+	}
+	*/
 	
 	/**
 	 * Retourne la quantité de nourriture transportée par {@code AntWorker}
@@ -50,7 +73,7 @@ public final class AntWorker extends Ant {
 	 */
 	protected void seekForFood(AntWorkerEnvironmentView env, Time dt) {
 		double antMaxFood = Context.getConfig().getDouble(Config.ANT_MAX_FOOD);
-		this.move(dt);
+		this.move(env, dt);
 		if (this.getFoodQuantity() == 0) {
 			Food closestFood = env.getClosestFoodForAnt(this);
 			if (closestFood != null) {
