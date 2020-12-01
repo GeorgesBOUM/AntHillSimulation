@@ -46,6 +46,21 @@ public final class AntWorker extends Ant {
 	}
 	*/
 	
+	@Override
+	public int getMinAttackStrength() {
+		return Context.getConfig().getInt(Config.ANT_WORKER_MIN_STRENGTH);
+	}
+
+	@Override
+	public int getMaxAttackStrength() {
+		return Context.getConfig().getInt(Config.ANT_WORKER_MAX_STRENGTH);
+	}
+
+	@Override
+	public Time getMaxAttackDuration() {
+		return Context.getConfig().getTime(Config.ANT_WORKER_ATTACK_DURATION);
+	}
+	
 	/**
 	 * Retourne la quantité de nourriture transportée par {@code AntWorker}
 	 * @return la quantité de nourriture transportée
@@ -58,7 +73,7 @@ public final class AntWorker extends Ant {
 	 * Définit la valeur de l'angle de direction nécessaire pour un demi tour
 	 * @return la nouvelle valeur de l'angle de direction après le demi tour
 	 */
-	private double turnAroun() {
+	private double turnAround() {
 		double demiTour = this.getDirection() + Math.PI;
 		if (demiTour > 2 * Math.PI) {
 			demiTour -= 2 * Math.PI;
@@ -82,12 +97,12 @@ public final class AntWorker extends Ant {
 				} else {
 					this.foodQuantity = closestFood.takeQuantity(antMaxFood);
 				}
-				this.setDirection(this.turnAroun());
+				this.setDirection(this.turnAround());
 			}
 		}
 		if (env.dropFood(this) && this.getFoodQuantity() > 0) {
 			this.foodQuantity = 0;
-			this.setDirection(turnAroun());
+			this.setDirection(turnAround());
 		}
 	}
 	

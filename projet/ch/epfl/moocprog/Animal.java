@@ -19,6 +19,7 @@ public abstract class Animal extends Positionable {
 	private int hitpoints;
 	private Time lifespan;
 	private Time rotationDelay;
+	private Time attackDuration;
 	
 	/**
 	 * Construit un Animal à une position passée en paramètre et 
@@ -31,7 +32,26 @@ public abstract class Animal extends Positionable {
 		this.hitpoints = hitpoints;
 		this.lifespan = lifespan;
 		this.rotationDelay = Time.ZERO;
+		this.attackDuration = Time.ZERO;
 	}
+	
+	/**
+	 * Retourne la force d'attaque minimale
+	 * @return la force d'attack minimale
+	 */
+	public abstract int getMinAttackStrength();
+	
+	/**
+	 * Retourne la force d'attaque maximale
+	 * @return la force d'attaque maximale
+	 */
+	public abstract int getMaxAttackStrength();
+	
+	/**
+	 * Retourne la durée maximale d'une attaque
+	 * @return la durée maximale d'une attaque
+	 */
+	public abstract Time getMaxAttackDuration();
 	
 	/**
 	 * Retourne la vitesse d'un animal donné
@@ -68,6 +88,27 @@ public abstract class Animal extends Positionable {
 	 * @param dt
 	 */
 	protected abstract void afterMoveDispatch(AnimalEnvironmentView env, Time dt);
+	
+	/**
+	 * Détermine si un animal est un ennemi pour un autre
+	 * @param entity
+	 * @return la relation (booléenne) à un autre animal (est un ennemi ou non)
+	 */
+	protected abstract boolean isEnemy(Animal entity);
+	
+	/**
+	 * Détermine si la {@code Termite} est un ennemi pour un autre animal
+	 * @param other
+	 * @return un booléen: la termite est une ennemie ou non
+	 */
+	protected abstract boolean isEnemyDispatch(Termite other);
+	
+	/**
+	 * Détermine si la {@code Ant} est un ennemi pour un autre animal
+	 * @param other
+	 * @return un booléen: la fourmi est une ennemie ou non
+	 */
+	protected abstract boolean isEnemyDispatch(Ant other);
 	
 	/**
 	 * Retourne l'angle de la direction de l'animal
@@ -172,7 +213,7 @@ public abstract class Animal extends Positionable {
 	
 	/**
 	 * Retourne un nouveau {@code RotationProbability} avec ses tableaux
-	 * de directiion et d'angle (comportement par défaut d'un {@code Animal}
+	 * de direction et d'angle (comportement par défaut d'un {@code Animal}
 	 * @return un nouveau {@code RotationProbability}
 	 */
 	protected final RotationProbability computeDefaultRotationProbs() {

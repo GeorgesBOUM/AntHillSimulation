@@ -60,6 +60,24 @@ public class Ant extends Animal{
 	public double getSpeed() {
 		return 0.0;
 	}
+	
+	@Override
+	public int getMinAttackStrength() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getMaxAttackStrength() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public Time getMaxAttackDuration() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
 	protected void specificBehaviorDispatch(AnimalEnvironmentView env, Time dt) {
@@ -74,6 +92,25 @@ public class Ant extends Animal{
 	@Override
 	protected final void afterMoveDispatch(AnimalEnvironmentView env, Time dt) {
 		env.selectAfterMoveDispatch(this, dt);
+	}
+	
+	@Override
+	protected final boolean isEnemy(Animal entity) {
+		return !this.isDead() && !entity.isDead() && entity.isEnemyDispatch(this);
+	}
+
+	@Override
+	protected final boolean isEnemyDispatch(Termite other) {
+		return true;
+	}
+
+	@Override
+	protected final boolean isEnemyDispatch(Ant other) {
+		if (this.getAnthillId().equals(other.getAnthillId())) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 	
 	/**
@@ -97,6 +134,11 @@ public class Ant extends Animal{
 		}
 	}
 	
+	/**
+	 * Retourne la probabilité de rotation d'une {@code Ant}
+	 * @param env
+	 * @return
+	 */
 	protected final RotationProbability computeRotationProbs(AntEnvironmentView env) {
 		return this.probModel.computerRotationProbs(this.computeDefaultRotationProbs(), 
 				this.getPosition(), this.getDirection(), env);

@@ -18,7 +18,8 @@ import ch.epfl.moocprog.utils.Utils;
  */
 public final class Environment implements 
 	FoodGeneratorEnvironmentView, AnimalEnvironmentView,
-	AntEnvironmentView, AntWorkerEnvironmentView, AnthillEnvironmentView {
+	AntEnvironmentView, AntWorkerEnvironmentView, 
+	TermiteEnvironmentView, AnthillEnvironmentView {
 	private FoodGenerator foodGenerator;
 	private List<Food> listFood;
 	private List<Animal> listAnimal;
@@ -244,6 +245,48 @@ public final class Environment implements
 		ant.afterMoveAnt(this, dt);
 	}
 	
+	@Override
+	public void selectSpecificBehaviorDispatch(Termite termite, Time dt) {
+		termite.seekForEnemies(this, dt);
+	}
+
+	@Override
+	public RotationProbability selectComputeRotationProbsDispatch(Termite termite) {
+		return termite.computeRotationProbs(this);
+	}
+
+	@Override
+	public void selectAfterMoveDispatch(Termite termite, Time dt) {
+		termite.afterMoveTermite(this, dt);
+	}
+	
+	@Override
+	public List<Animal> getVisibleEnemiesForAnimal(Animal from) {
+		Utils.requireNonNull(from);
+		double sightDistance = Context.getConfig().getDouble(Config.ANIMAL_SIGHT_DISTANCE);
+		double distanceToEnemy;
+		List<Animal> visibleEnemies = new LinkedList<Animal>();
+		Iterator<Animal> animalIterator= this.listAnimal.iterator();
+		while (animalIterator.hasNext()) {
+			Animal enemy = animalIterator.next();
+			distanceToEnemy = from.getPosition().toricDistance(enemy.getPosition());
+			if (from.isEnemy(enemy) && distanceToEnemy <= sightDistance) {
+				visibleEnemies.add(from);
+			}
+		}
+		return visibleEnemies;
+	}
+	
+	@Override
+	public boolean isVisibleFromEnemies(Animal from) {
+		List<Animal> visibleEnemies = this.getVisibleEnemiesForAnimal(from);
+		if (visibleEnemies.isEmpty()) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+		
 	/**
 	 * Normalise un angle donné en le projettant dans l'intervalle [0, 2pi]
 	 * @param angle

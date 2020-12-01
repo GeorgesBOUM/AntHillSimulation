@@ -36,6 +36,21 @@ public final class AntSoldier extends Ant {
 		this(tp, anthillId, new PheromoneRotationProbabilityModel());
 	}
 	
+	@Override
+	public int getMinAttackStrength() {
+		return Context.getConfig().getInt(Config.ANT_SOLDIER_MIN_STRENGTH);
+	}
+
+	@Override
+	public int getMaxAttackStrength() {
+		return Context.getConfig().getInt(Config.ANT_SOLDIER_MAX_STRENGTH);
+	}
+
+	@Override
+	public Time getMaxAttackDuration() {
+		return Context.getConfig().getTime(Config.ANT_SOLDIER_ATTACK_DURATION);
+	}
+	
 	/**
 	 * Permet à {@code AntSoldier} de chercher et combattre les ennemies
 	 * @param env
